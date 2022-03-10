@@ -1,17 +1,26 @@
 import os
 import threading
 import warnings
-from concurrent.futures import ThreadPoolExecutor, ALL_COMPLETED, wait
 from typing import Optional
 
-import pandas
 import pymysql
 from dotenv import load_dotenv
 from mongo2file.constants import *
-from mongo2file.utils import to_str_datetime, serialize_obj
+from mongo2file.utils import to_str_datetime
 
 load_dotenv(verbose=True)
 lock_ = threading.Lock()
+
+
+def check_folder_path(folder_path):
+    if folder_path is None:
+        _ = '.'
+    elif not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        _ = folder_path
+    else:
+        _ = folder_path
+    return _
 
 
 class MysqlEngine:
@@ -44,12 +53,12 @@ class MysqlEngine:
             user=self.user,
             password=self.password,
             db=self.database,
-            charset='utf8'
+            charset='utf8mb4',
+            cursorclass=pymysql.cursors.DictCursor
         )
         self.cursor = self.mysql_core_.cursor(pymysql.cursors.DictCursor)
         self.collection_s_ = []
         self.collection_names = self.get_collection_names(self.cursor)
-        # print(self.collection_names)
 
     def get_collection_names(self, cursor):
         cursor.execute('show tables')
@@ -58,124 +67,66 @@ class MysqlEngine:
                 self.collection_s_.append(v)
         return self.collection_s_
 
-    def to_csv(self, query: dict, filename: str, limit: int = 20):
+    def to_csv(self, query=None,sql_:str=None, folder_path: str = None, filename: str = None, limit: int = 20,
+               ignore_error: bool = False):
+        """
+        :param query: 查询字典
+        :param sql_: 原生 sql 语句、str 类型
+        :param folder_path: 指定导出的文件夹目录
+        :param filename: 指定导出的文件名
+        :param limit: 限制导出数量
+        :param ignore_error: 是否忽略导出过程中出现的错误
+        :return:
+        """
+        if query is None:
+            query = {}
+
         if not isinstance(query, dict):
-            raise TypeError('query must be of Dict type.')
+            raise TypeError('query must be of Dict type')
+        if not isinstance(limit, int):
+            raise TypeError("limit must be an integer type")
+        if not isinstance(ignore_error, bool):
+            raise TypeError("_id must be an boolean type")
+
+        folder_path = check_folder_path(folder_path)
+
         if self.collection:
             if filename is None:
-                filename = f'{self.collection}_{to_str_datetime()}'
-            sql = f"select * from {self.collection};"
-            self.cursor.execute(sql)
+                filename = f'{self.collection}_{to_str_datetime()}.csv'
+
+            if sql_ is None:
+                sql_ = f"select * from {self.collection};"
+            else:
+                if not isinstance(sql_, str):
+                    raise TypeError("sql must be an str type")
+
+            self.cursor.execute(sql_)
             doc_list_ = self.cursor.fetchall()
-            print(doc_list_)
-            data = pandas.DataFrame(doc_list_)
-            data.to_csv(path_or_buf=f'{filename}.csv')
+
+            import pyarrow as pa
+            from pyarrow import csv as pa_csv_
+            df_ = pa.Table.from_pylist(mapping=doc_list_, schema=None, metadata=None)
+            with pa_csv_.CSVWriter(f'{folder_path}/{filename}', df_.schema) as writer:
+                writer.write_table(df_)
+
         else:
             warnings.warn('No collection specified, All collections will be exported.', DeprecationWarning)
-            self.to_csv_s_()
-
-    def to_excel(self, query: dict, filename: str, limit: int = 20):
-        if not isinstance(query, dict):
-            raise TypeError('query must be of Dict type.')
-        if self.collection:
-            if filename is None:
-                filename = f'{self.collection}_{to_str_datetime()}'
-            sql = f"select * from {self.collection};"
-            self.cursor.execute(sql)
-            doc_list_ = self.cursor.fetchall()
-            data = pandas.DataFrame(doc_list_)
-            data.to_excel(path_or_buf=f'{filename}.csv')
-        else:
-            warnings.warn('No collection specified, All collections will be exported.', DeprecationWarning)
-            self.to_excel_s_()
-
-    def to_json(self, query: dict, filename: str = None, limit: int = 20):
-        if not isinstance(query, dict):
-            raise TypeError('query must be of Dict type.')
-        if self.collection:
-            if filename is None:
-                filename = f'{self.collection}_{to_str_datetime()}'
-            sql = f"select * from {self.collection};"
-            self.cursor.execute(sql)
-            doc_list_ = self.cursor.fetchall()
-            with open(f'{filename}.json', 'w', encoding="utf-8") as f:
-                [f.write(serialize_obj(data) + "\n") for data in doc_list_]
-        else:
-            warnings.warn('No collection specified, All collections will be exported.', DeprecationWarning)
-            self.to_json_s_()
-
-    def to_mongo(self):
-        ...
-
-    def no_collection_to_csv_(self, collection_: str, filename: str):
-        if collection_:
-            if filename is None:
-                filename = f'{collection_}_{to_str_datetime()}'
-            # cursor = self.mysql_core_.cursor(pymysql.cursors.DictCursor)
-            lock_.acquire()  # get lock
-            sql = f"select * from {collection_};"
-            self.cursor.execute(sql)
-            doc_list_ = self.cursor.fetchall()
-            lock_.release()  # release lock
-            data = pandas.DataFrame(doc_list_)
-            data.to_csv(path_or_buf=f'{filename}.csv', encoding=PANDAS_ENCODING)
-
-    def no_collection_to_excel_(self, collection_: str, filename: str):
-        if collection_:
-            if filename is None:
-                filename = f'{collection_}_{to_str_datetime()}'
-
-            cursor = self.mysql_core_.cursor(pymysql.cursors.DictCursor)
-            sql = f"select * from {collection_};"
-            cursor.execute(sql)
-            doc_list_ = cursor.fetchall()
-            data = pandas.DataFrame(doc_list_)
-            data.to_excel(excel_writer=f'{filename}.xlsx', encoding=PANDAS_ENCODING)
-
-    def no_collection_to_json_(self, collection_: str, filename: str):
-        if collection_:
-            if filename is None:
-                filename = f'{collection_}_{to_str_datetime()}'
-            sql = f"select * from {collection_};"
-            self.cursor.execute(sql)
-            doc_list_ = self.cursor.fetchall()
-            with open(f'{filename}.json', 'w', encoding="utf-8") as f:
-                [f.write(serialize_obj(data) + "\n") for data in doc_list_]
-
-    def to_csv_s_(self):
-        self.concurrent_(self.no_collection_to_csv_, self.collection_names)
-
-    def to_excel_s_(self):
-        self.concurrent_(self.no_collection_to_excel_, self.collection_names)
-
-    def to_json_s_(self):
-        self.concurrent_(self.no_collection_to_json_, self.collection_names)
-
-    def concurrent_(self, func, collection_names):
-        # todo 这里并发时需要加线程锁
-        with ThreadPoolExecutor(max_workers=THREAD_POOL_MAX_WORKERS) as executor:
-            futures_ = [executor.submit(func, collection_name, collection_name) for
-                        collection_name in
-                        collection_names]
-            wait(futures_, return_when=ALL_COMPLETED)
-            for future_ in futures_:
-                print(future_)
-                ...
+            # self.to_csv_s_()
 
     def __del__(self):
-        # self.cursor.close()
+        #     self.cursor.close()
         self.mysql_core_.close()
-        ...
 
 
 if __name__ == '__main__':
     M = MysqlEngine(
-        host=os.getenv('MYSQL_HOST','192.168.0.141'),
-        port=int(os.getenv('MYSQL_PORT',3306)),
-        username=os.getenv('MYSQL_USERNAME','root'),
-        password=os.getenv('MYSQL_PASSWORD',''),
-        database=os.getenv('MYSQL_DATABASE',''),
-        collection=os.getenv('MYSQL_COLLECTION',''),
+        host=os.getenv('MYSQL_HOST', '192.168.0.141'),
+        port=int(os.getenv('MYSQL_PORT', 3306)),
+        username=os.getenv('MYSQL_USERNAME', 'root'),
+        password=os.getenv('MYSQL_PASSWORD', '_admin_'),
+        database=os.getenv('MYSQL_DATABASE', 'sm_admin'),
+        collection=os.getenv('MYSQL_COLLECTION', 'sm_no_comment_scenic'),
     )
-    M.to_csv(query={}, filename="_")
+
+    M.to_csv()
     # M.to_json()

@@ -1,0 +1,19 @@
+# MYSQL SETTING
+MYSQL_HOST = 'localhost'
+MYSQL_PORT = 3306
+MYSQL_USERNAME = None
+MYSQL_PASSWORD = None
+MYSQL_DATABASE = None
+MYSQL_COLLECTION = None
+MYSQL_CONN_TIMEOUT = 30
+MYSQL_CONN_RETRIES = 5
+
+PANDAS_ENCODING = 'utf_8_sig'
+TIME_ZONE = 'Asia/Shanghai'
+
+THREAD_POOL_MAX_WORKERS = 8
+MONGO_POOL_MAX_WORKERS = 200
+
+ECHO_INFO = '{}[+] {} exported successfully → {}'
+
+IGNORE_TYPE = (str, int, float, bool)

@@ -7,7 +7,6 @@ from typing import Optional
 import pandas
 import pymysql
 from dotenv import load_dotenv
-
 from mongo2file.constants import *
 from mongo2file.utils import to_str_datetime, serialize_obj
 
@@ -171,12 +170,12 @@ class MysqlEngine:
 
 if __name__ == '__main__':
     M = MysqlEngine(
-        host=os.getenv('MYSQL_HOST'),
-        port=int(os.getenv('MYSQL_PORT')),
-        username=os.getenv('MYSQL_USERNAME'),
-        password=os.getenv('MYSQL_PASSWORD'),
-        database=os.getenv('MYSQL_DATABASE'),
-        # collection=os.getenv('MYSQL_COLLECTION'),
+        host=os.getenv('MYSQL_HOST','192.168.0.141'),
+        port=int(os.getenv('MYSQL_PORT',3306)),
+        username=os.getenv('MYSQL_USERNAME','root'),
+        password=os.getenv('MYSQL_PASSWORD',''),
+        database=os.getenv('MYSQL_DATABASE',''),
+        collection=os.getenv('MYSQL_COLLECTION',''),
     )
     M.to_csv(query={}, filename="_")
     # M.to_json()

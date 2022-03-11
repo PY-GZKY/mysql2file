@@ -13,8 +13,8 @@ import pymysql
 import xlsxwriter
 from dotenv import load_dotenv
 
-from mysql2file.constants import *
-from mysql2file.utils import to_str_datetime, serialize_obj
+from .constants import *
+from .utils import to_str_datetime, serialize_obj
 
 load_dotenv(verbose=True)
 lock_ = threading.Lock()

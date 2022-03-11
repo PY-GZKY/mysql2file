@@ -40,7 +40,7 @@ def to_excel():
 
 
 def to_json():
-    result_ = M.to_excel()
+    result_ = M.to_json()
     assert "successfully" in result_
 ```
 

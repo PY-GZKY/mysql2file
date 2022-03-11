@@ -14,9 +14,9 @@ def setup_function():
         host=os.getenv('MYSQL_HOST', '192.168.0.141'),
         port=int(os.getenv('MYSQL_PORT', 3306)),
         username=os.getenv('MYSQL_USERNAME', 'root'),
-        password=os.getenv('MYSQL_PASSWORD', 'sanmaoyou_admin_'),
-        database=os.getenv('MYSQL_DATABASE', 'sm_admin'),
-        collection=os.getenv('MYSQL_COLLECTION', 'sm_no_comment_scenic'),
+        password=os.getenv('MYSQL_PASSWORD', '_admin_'),
+        database=os.getenv('MYSQL_DATABASE', 'sm'),
+        collection=os.getenv('MYSQL_COLLECTION', 'sm'),
     )
 
 

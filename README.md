@@ -44,6 +44,12 @@ def to_json():
     assert "successfully" in result_
 ```
 
+## Todo
+- 加入多线程并发导出
+- 加入支持导出数据库中的所有表
+- 加入容错导出
+
+
 
 > 有关更多 [mysql2file](https://mysql2file.readthedocs.io/) 详细信息，请参阅文档。
 

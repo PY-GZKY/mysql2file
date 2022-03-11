@@ -87,7 +87,7 @@ class MysqlEngine:
         if not isinstance(ignore_error, bool):
             raise TypeError("_id must be an boolean type")
 
-        folder_path = check_folder_path(folder_path)
+        folder_path_ = check_folder_path(folder_path)
 
         if self.collection:
             if filename is None:
@@ -103,7 +103,7 @@ class MysqlEngine:
             doc_list_ = self.cursor.fetchall()
 
             df_ = pa.Table.from_pylist(mapping=doc_list_, schema=None, metadata=None)
-            with pa_csv_.CSVWriter(f'{folder_path}/{filename}', df_.schema) as writer:
+            with pa_csv_.CSVWriter(f'{folder_path_}/{filename}', df_.schema) as writer:
                 writer.write_table(df_)
             result_ = ECHO_INFO.format(colorama.Fore.GREEN, self.collection, f'{folder_path_}/{filename}')
             return result_

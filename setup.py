@@ -3,7 +3,7 @@ from pathlib import Path
 
 from setuptools import setup
 
-description = '↻ 一个用于 Mysql 数据库转换为各类文件格式的库'
+description = '↻ 一个 Mysql 数据库转换为表格文件的库'
 readme = Path(__file__).parent / 'README.md'
 if readme.exists():
     long_description = readme.read_text(encoding='utf_8_sig')
@@ -57,13 +57,10 @@ setup(
         mysql2file=mysql2file.cli:cli
     """,
     install_requires=[
-        'click>=6.7',
         'alive_progress==2.3.1',
         'colorama==0.4.4',
+        'PyMySQL==0.9.3',
         'pyarrow==7.0.0',
-        'pytest==6.2.5',
-        'python-dotenv==0.19.2',
-        'python_dateutil==2.8.2',
         'XlsxWriter==3.0.2'
     ],
 )

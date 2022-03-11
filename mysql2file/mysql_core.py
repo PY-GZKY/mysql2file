@@ -19,6 +19,7 @@ from mysql2file.utils import to_str_datetime, serialize_obj
 load_dotenv(verbose=True)
 lock_ = threading.Lock()
 
+
 def check_folder_path(folder_path):
     if folder_path is None:
         _ = '.'
@@ -28,6 +29,7 @@ def check_folder_path(folder_path):
     else:
         _ = folder_path
     return _
+
 
 class MysqlEngine:
     def __init__(
@@ -108,6 +110,8 @@ class MysqlEngine:
             df_ = pa.Table.from_pylist(mapping=doc_list_, schema=None, metadata=None)
             with pa_csv_.CSVWriter(f'{folder_path}/{filename}', df_.schema) as writer:
                 writer.write_table(df_)
+            result_ = ECHO_INFO.format(colorama.Fore.GREEN, self.collection, f'{folder_path_}/{filename}')
+            return result_
         else:
             warnings.warn('No collection specified, All collections will be exported.', DeprecationWarning)
 
@@ -216,7 +220,7 @@ class MysqlEngine:
                     raise TypeError("sql must be an str type")
             self.cursor.execute(sql_)
             doc_objs_ = self.cursor.fetchall()
-            df_ = pa.Table.from_pylist(mapping=doc_objs_,schema=None, metadata=None)
+            df_ = pa.Table.from_pylist(mapping=doc_objs_, schema=None, metadata=None)
             with open(f'{folder_path_}/{filename}', 'wb') as f:
                 pa_parquet_.write_table(df_, f)
             result_ = ECHO_INFO.format(colorama.Fore.GREEN, self.collection, f'{folder_path_}/{filename}')
@@ -225,17 +229,3 @@ class MysqlEngine:
     def __del__(self):
         self.cursor.close()
         self.mysql_core_.close()
-
-
-if __name__ == '__main__':
-    M = MysqlEngine(
-        host=os.getenv('MYSQL_HOST', '192.168.0.141'),
-        port=int(os.getenv('MYSQL_PORT', 3306)),
-        username=os.getenv('MYSQL_USERNAME', 'root'),
-        password=os.getenv('MYSQL_PASSWORD', '_admin_'),
-        database=os.getenv('MYSQL_DATABASE', 'sm'),
-        collection=os.getenv('MYSQL_COLLECTION', 'sm'),
-    )
-    sql_ = "select * from sm where id=1415;"
-    M.to_csv(sql_)
-

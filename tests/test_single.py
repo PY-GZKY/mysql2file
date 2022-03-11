@@ -1,3 +1,5 @@
+import os
+
 import dotenv
 import pytest
 
@@ -8,25 +10,33 @@ dotenv.load_dotenv(verbose=True)
 
 def setup_function():
     global M
-    M = MysqlEngine()
+    M = MysqlEngine(
+        host=os.getenv('MYSQL_HOST', '192.168.0.141'),
+        port=int(os.getenv('MYSQL_PORT', 3306)),
+        username=os.getenv('MYSQL_USERNAME', 'root'),
+        password=os.getenv('MYSQL_PASSWORD', 'sanmaoyou_admin_'),
+        database=os.getenv('MYSQL_DATABASE', 'sm_admin'),
+        collection=os.getenv('MYSQL_COLLECTION', 'sm_no_comment_scenic'),
+    )
 
 
 def test_to_csv():
-    result_ = M.to_csv(folder_path="_csv",is_block=False, block_size=50000)
+    result_ = M.to_csv(folder_path="_csv")
     print(result_)
     assert "successfully" in result_
 
 
 def test_to_excel():
-    result_ = M.to_excel(folder_path="_excel", is_block=False, block_size=50000, mode='xlsx', ignore_error=True)
+    result_ = M.to_excel(folder_path="_excel", mode='xlsx', ignore_error=True)
     print(result_)
     assert "successfully" in result_
 
 
 def test_to_json():
-    result_ = M.to_json(folder_path="./_json", is_block=False, block_size=50000)
+    result_ = M.to_json(folder_path="./_json")
     print(result_)
     assert "successfully" in result_
+
 
 def test_to_pickle():
     result_ = M.to_pickle(folder_path="./_pickle")

@@ -1,5 +1,4 @@
 import os
-import threading
 import warnings
 from typing import Optional
 
@@ -11,13 +10,9 @@ import pyarrow.feather as pa_feather_
 import pyarrow.parquet as pa_parquet_
 import pymysql
 import xlsxwriter
-from dotenv import load_dotenv
 
 from .constants import *
 from .utils import to_str_datetime, serialize_obj
-
-load_dotenv(verbose=True)
-lock_ = threading.Lock()
 
 
 def check_folder_path(folder_path):
